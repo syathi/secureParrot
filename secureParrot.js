@@ -41,10 +41,11 @@ app.on('request', (req, res) => {
       if(WebhookEventObject.type === 'message'){
           let message;
           if(WebhookEventObject.message.type === 'text'){
-              message = {
-                type: 'text',
-                text: 'Hello World!'
-              };
+              //TODO: ツイート検索リクエスト的な処理
+              // message = {
+              //   type: 'text',
+              //   text: 'Hello World!'
+              // };
           }
 
           client.replyMessage(WebhookEventObject.replyToken, message)
