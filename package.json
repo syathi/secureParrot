@@ -1,0 +1,20 @@
+{
+  "name": "secureparrot",
+  "version": "1.0.0",
+  "description": "secureparrot",
+  "main": "secureParrot.js",
+  "dependencies": {
+    "@line/bot-sdk": "^2.0.0",
+    "twitter": "^1.7.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "start": "node secureParrot.js"
+  },
+  "engines": {
+    "node": "6.3.1",
+    "npm": "5.0.3"
+  },
+  "author": "",
+  "license": "ISC"
+}
