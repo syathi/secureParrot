@@ -41,11 +41,11 @@ app.on('request', (req, res) => {
       if(WebhookEventObject.type === 'message'){
           let message;
           if(WebhookEventObject.message.type === 'text'){
-              //TODO: ツイート検索リクエスト的な処理
-              // message = {
-              //   type: 'text',
-              //   text: 'Hello World!'
-              // };
+              //TODO: ツイート取得コマンド追加
+              message = {
+                type: 'text',
+                text: 'Hello World!'
+              };
           }
 
           client.replyMessage(WebhookEventObject.replyToken, message)
@@ -65,14 +65,15 @@ twitClient.stream('user', {}, function(stream) {
   console.log("streaming..");
   const searchUser = "sfeyrt"; //"sec_trend";
   stream.on('data', function(tweet) {
-    console.log()
     if(tweet.user.screen_name === searchUser && tweet.text){
       console.log(tweet.text);
       const message = {
         type : 'text',
         text: tweet.text
       }; 
-      client.pushMessage("U78655227f469255d8a3473aa69c31fa4", message)
+      //TODO: リスト内全体にpush, リストはDBから参照, トーク開始時に追加
+      pushList = ["U78655227f469255d8a3473aa69c31fa4"];//後で変更する
+      client.pushMessage(pushList[0], message)
           .then( (body) => {
             console.log(body);
           }).catch( (e) => {
