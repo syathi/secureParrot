@@ -1,8 +1,14 @@
-const line = require('@line/bot-sdk');
-const http = require('http')
-const app  = http.createServer();
-const token = require('./tokens.js')
+const line    = require('@line/bot-sdk');
+const https   = require('https');
+const fs      = require('fs'); 
+const tokens   = require('./tokens.js')
 const Twitter = require('twitter');
+
+const options = {
+  key:  fs.readFileSync("./server.key"),
+  cert: fs.readFileSync("./server.crt")
+}
+const app = https.createServer(options);
 
 const client = new line.Client({
           channelAccessToken: tokens.line_channel_access_token
