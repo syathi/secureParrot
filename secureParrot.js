@@ -46,11 +46,13 @@ app.on('request', (req, res) => {
       console.log(WebhookEventObject);     
       if(WebhookEventObject.type === 'message'){
           let message;
+          console.log(WebhookEventObject.message);
           if(WebhookEventObject.message.type === 'text'){
               //TODO: ツイート取得コマンド追加
+              console.log("got message");
               message = {
                 type: 'text',
-                text: 'Hello World!'
+                text: ''
               };
           }
 
@@ -70,8 +72,9 @@ app.on('request', (req, res) => {
 twitClient.stream('user', {}, function(stream) {
   console.log("streaming..");
   const searchUser = "sfeyrt"; //"sec_trend";
+  const sec_trend = "sec_trend";//後で消す
   stream.on('data', function(tweet) {
-    if(tweet.user.screen_name === searchUser && tweet.text){
+    if((tweet.user.screen_name === searchUser && tweet.text) ||  tweet.user.screen_name === sec_trend && tweet.text ){
       console.log(tweet.text);
       const message = {
         type : 'text',
