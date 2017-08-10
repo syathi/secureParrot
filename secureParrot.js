@@ -1,14 +1,9 @@
 const line    = require('@line/bot-sdk');
-const https   = require('https');
+const http    = require('http');
 const fs      = require('fs'); 
-const tokens   = require('./tokens.js')
+const tokens  = require('./tokens.js')
 const Twitter = require('twitter');
-
-const options = {
-  key:  fs.readFileSync("./server.key"),
-  cert: fs.readFileSync("./server.crt")
-}
-const app = https.createServer(options);
+const app = http.createServer();
 
 const client = new line.Client({
           channelAccessToken: tokens.line_channel_access_token
@@ -43,27 +38,39 @@ app.on('request', (req, res) => {
       }
 
       let WebhookEventObject = JSON.parse(body).events[0];   
-      console.log(WebhookEventObject);     
+      //console.log(WebhookEventObject);     
       if(WebhookEventObject.type === 'message'){
-          let message;
-          console.log(WebhookEventObject.message);
-          if(WebhookEventObject.message.type === 'text'){
-              //TODO: ツイート取得コマンド追加
-              console.log("got message");
-              message = {
-                type: 'text',
-                text: ''
-              };
+        let message;
+        if(WebhookEventObject.message.type === 'text'){
+          if(WebhookEventObject.message.text.match(/ツイートを取得|get tweet/)){
+            message = {
+              type: 'text',
+              text: 'ツイートを取得するピヨ'
+            }
+            const replyToken = WebhookEventObject.replyToken
+            client.replyMessage(replyToken, message).then( (body) => {
+              console.log(body);
+              twitClient.get('statuses/user_timeline', {screen_name : "sec_trend", count : 10}, (error, data, response) => {
+                data.forEach( d => {
+                  message = {
+                    type: 'text',
+                    text: d.text
+                  };
+                  client.pushMessage(WebhookEventObject.source.userId, message).then( (body) => {
+                    console.log(body);
+                  })
+                  .catch( (e) => {
+                    console.log(e);
+                  });
+                });
+              });
+            })
+            .catch( (e) => {
+              console.log(e);
+            });
           }
-
-          client.replyMessage(WebhookEventObject.replyToken, message)
-          .then( (body) => {
-            console.log(body);
-          }).catch( (e) => {
-            console.log(e);
-          });
+        }  
       }
-
       res.writeHead(200, {'Content-Type': 'text/plain'});
       res.end('su');
   });
