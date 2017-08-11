@@ -78,17 +78,16 @@ app.on('request', (req, res) => {
 
 twitClient.stream('user', {}, function(stream) {
   console.log("streaming..");
-  const searchUser = "sfeyrt"; //"sec_trend";
-  const sec_trend = "sec_trend";//後で消す
+  const searchUsers = ["sec_trend", "sfeyrt", "ockeghem"];
   stream.on('data', function(tweet) {
-    if((tweet.user.screen_name === searchUser && tweet.text) ||  tweet.user.screen_name === sec_trend && tweet.text ){
+    if( searchUsers.indexOf(tweet.user.screen_name) >= 0 && tweet.text ){
       console.log(tweet.text);
       const message = {
         type : 'text',
         text: tweet.text
       }; 
       //TODO: リスト内全体にpush, リストはDBから参照, トーク開始時に追加
-      pushList = ["U78655227f469255d8a3473aa69c31fa4"];//後で変更する
+      pushList = tokens.push_users;//後で変更する
       client.pushMessage(pushList[0], message)
           .then( (body) => {
             console.log(body);
