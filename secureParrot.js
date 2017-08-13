@@ -14,7 +14,8 @@ const twitClient = new Twitter({
   access_token_key: tokens.twitter_access_token_key,
   access_token_secret: tokens.twitter_access_token_secret
 });
-console.log("server running....");
+const port = process.env.PORT || 8123;
+console.log("server running on " + port);
 
 process.on('uncaughtException', (err) => {
     console.log(err.stack);
@@ -36,7 +37,6 @@ app.on('request', (req, res) => {
         console.log('bodyが空です。');
         return;
       }
-
       let WebhookEventObject = JSON.parse(body).events[0];   
       //console.log(WebhookEventObject);     
       if(WebhookEventObject.type === 'message'){
@@ -47,8 +47,7 @@ app.on('request', (req, res) => {
               type: 'text',
               text: 'ツイートを取得するピヨ'
             }
-            const replyToken = WebhookEventObject.replyToken
-            client.replyMessage(replyToken, message).then( (body) => {
+            client.replyMessage(WebhookEventObject.replyToken, message).then( (body) => {
               console.log(body);
               twitClient.get('statuses/user_timeline', {screen_name : "sec_trend", count : 10}, (error, data, response) => {
                 data.forEach( d => {
@@ -74,7 +73,7 @@ app.on('request', (req, res) => {
       res.writeHead(200, {'Content-Type': 'text/plain'});
       res.end('su');
   });
-}).listen(process.env.PORT || 8123);
+}).listen(port);
 
 twitClient.stream('user', {}, function(stream) {
   console.log("streaming..");
