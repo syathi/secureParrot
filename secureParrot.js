@@ -70,6 +70,20 @@ app.on('request', (req, res) => {
           }
         }  
       }
+
+      if(WebhookEventObject.type === "follow"){
+        console.log("followed");
+        const message = {
+          type: "text",
+          text: "ツイートを取得、もしくはget tweetでセキュリティに関するアカウントのツイートを取得するピヨ！"
+        }
+        client.replyMessage(WebhookEventObject.replyToken, message).then( (body) => {
+          console.log(body);
+        })
+        .catch( (e) => {
+          console.log(e);
+        })
+      }
       res.writeHead(200, {'Content-Type': 'text/plain'});
       res.end('su');
   });
@@ -100,3 +114,6 @@ twitClient.stream('user', {}, function(stream) {
     throw error;
   });
 });
+
+
+
