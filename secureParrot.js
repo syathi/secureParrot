@@ -3,8 +3,9 @@ const http    = require('http');
 const fs      = require('fs'); 
 const tokens  = require('./tokens.js')
 const Twitter = require('twitter');
-const app = http.createServer();
+const Nedb    = require("nedb");
 
+const app = http.createServer();
 const client = new line.Client({
           channelAccessToken: tokens.line_channel_access_token
 });
@@ -14,6 +15,10 @@ const twitClient = new Twitter({
   access_token_key: tokens.twitter_access_token_key,
   access_token_secret: tokens.twitter_access_token_secret
 });
+const db = new Nedb({
+  filename: './userData.db',
+  autoload: true
+})
 const port = process.env.PORT || 8123;
 console.log("server running on " + port);
 
@@ -47,6 +52,7 @@ app.on('request', (req, res) => {
               type: 'text',
               text: 'ツイートを取得するピヨ'
             }
+            const token = WebhookEventObject.replyToken;
             client.replyMessage(WebhookEventObject.replyToken, message).then( (body) => {
               console.log(body);
               twitClient.get('statuses/user_timeline', {screen_name : "sec_trend", count : 10}, (error, data, response) => {
@@ -55,7 +61,8 @@ app.on('request', (req, res) => {
                     type: 'text',
                     text: d.text
                   };
-                  client.pushMessage(WebhookEventObject.source.userId, message).then( (body) => {
+                  const sendId = WebhookEventObject.source.groupId || WebhookEventObject.source.userId;
+                  client.pushMessage(sendId , message).then( (body) => {
                     console.log(body);
                   })
                   .catch( (e) => {
@@ -70,6 +77,7 @@ app.on('request', (req, res) => {
           }
         }  
       }
+
 
       if(WebhookEventObject.type === "follow"){
         console.log("followed");
@@ -100,12 +108,16 @@ twitClient.stream('user', {}, function(stream) {
         text: tweet.text
       }; 
       //TODO: リスト内全体にpush, リストはDBから参照, トーク開始時に追加
-      pushList = tokens.push_users;//後で変更する
-      client.pushMessage(pushList[0], message)
-          .then( (body) => {
-            console.log(body);
-          }).catch( (e) => {
-            console.log(e);
+      db.find({}, (err, push_users) => {
+        push_users.forEach(user => {
+          client.pushMessage(user.userToken, message)
+            .then( (body) => {
+              console.log(body);
+            })
+            .catch( (e) => {
+              console.log(e);
+            });
+        });
       });
     }    
   });

@@ -5,6 +5,7 @@
   "main": "secureParrot.js",
   "dependencies": {
     "@line/bot-sdk": "^2.0.0",
+    "nedb": "^1.8.0",
     "twitter": "^1.7.1"
   },
   "devDependencies": {},
