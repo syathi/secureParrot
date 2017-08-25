@@ -47,15 +47,19 @@ app.on('request', (req, res) => {
       if(WebhookEventObject.type === 'message'){
         let message;
         if(WebhookEventObject.message.type === 'text'){
-          if(WebhookEventObject.message.text.match(/ツイートを取得|get tweet/)){
+          const regExp = new RegExp(/ツイートを(\d+件)?取得|get \d* tweet/)
+          if(WebhookEventObject.message.text.match(regExp)){
+            const tmpArr     = WebhookEventObject.message.text.split(/(\d+)/);
+            const getCnt     = tmpArr.length > 2 ? tmpArr[1] : 10;
+            const messageTxt = getCnt !== 10 ? 'ツイートを' + getCnt + '件取得するピヨ' : 'ツイートを取得するピヨ';
             message = {
               type: 'text',
-              text: 'ツイートを取得するピヨ'
+              text: messageTxt
             }
             const token = WebhookEventObject.replyToken;
             client.replyMessage(WebhookEventObject.replyToken, message).then( (body) => {
               console.log(body);
-              twitClient.get('statuses/user_timeline', {screen_name : "sec_trend", count : 10}, (error, data, response) => {
+              twitClient.get('statuses/user_timeline', {screen_name : "sec_trend", count : getCnt}, (error, data, response) => {
                 data.forEach( d => {
                   message = {
                     type: 'text',
