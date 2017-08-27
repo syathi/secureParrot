@@ -65,7 +65,7 @@ app.on('request', (req, res) => {
                     type: 'text',
                     text: d.text
                   };
-                  const sendId = WebhookEventObject.source.groupId || WebhookEventObject.source.userId;
+                  const sendId = WebhookEventObject.source.groupId || WebhookEventObject.source.roomId  || WebhookEventObject.source.userId;
                   client.pushMessage(sendId , message).then( (body) => {
                     console.log(body);
                   })
@@ -111,7 +111,6 @@ twitClient.stream('user', {}, function(stream) {
         type : 'text',
         text: tweet.text
       }; 
-      //TODO: リスト内全体にpush, リストはDBから参照, トーク開始時に追加
       db.find({}, (err, push_users) => {
         push_users.forEach(user => {
           client.pushMessage(user.userToken, message)
