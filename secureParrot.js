@@ -20,6 +20,8 @@ const db = new Nedb({
   autoload: true
 })
 const port = process.env.PORT || 8123;
+const searchUsers = ["sec_trend", "ockeghem"];
+
 console.log("server running on " + port);
 
 process.on('uncaughtException', (err) => {
@@ -28,11 +30,35 @@ process.on('uncaughtException', (err) => {
 
 
 app.on('request', (req, res) => {
-  if(req.url !== '/' || req.method !== 'POST'){
-        res.writeHead(200, {'Content-Type': 'text/plain'});
-        res.end('');
+  if(req.url === "/debug_on" && req.method === "POST") { 
+    res.writeHead(200, {"Content-Type" : "text/plain"});
+    if(searchUsers.indexOf("sfeyrt") >= 0){
+      res.write("debug mode have been already on");
+      res.end('');
+    } else {
+      searchUsers.push("sfeyrt");
+      res.write("debug mode on");
+      res.end('');
+    }
+    return;
   }
-
+  if(req.url === "/debug_off" && req.method === "POST"){
+    res.writeHead(200, {"ContentType" : "text/plain"});
+    if(searchUsers.indexOf("sfeyrt") >= 0){
+      searchUsers.pop("sfeyrt");
+      res.write("debug mode off");
+      res.end('');
+    } else {
+      res.write("debug mode have been already off");
+      res.end('');
+    }
+    return;  
+  }
+  if(req.url !== '/' || req.method !== 'POST'){
+    res.writeHead(404, {'Content-Type': 'text/plain'});
+    console.log("404");
+    res.end('');
+  }
   let body = '';
   req.on('data', (chunk) => {
     body += chunk;
@@ -103,7 +129,6 @@ app.on('request', (req, res) => {
 
 twitClient.stream('user', {}, function(stream) {
   console.log("streaming..");
-  const searchUsers = ["sec_trend", "sfeyrt", "ockeghem"];
   stream.on('data', function(tweet) {
     if( searchUsers.indexOf(tweet.user.screen_name) >= 0 && tweet.text ){
       console.log(tweet.text);
