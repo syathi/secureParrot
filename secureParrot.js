@@ -15,12 +15,15 @@ const twitClient = new Twitter({
   access_token_key: tokens.twitter_access_token_key,
   access_token_secret: tokens.twitter_access_token_secret
 });
-const db = new Nedb({
+const userData = new Nedb({
   filename: './userData.db',
   autoload: true
-})
+});
+const searchUsers = new Nedb({
+  filename: "./searchUsers.db",
+  autoload: true
+});
 const port = process.env.PORT || 8123;
-const searchUsers = ["sec_trend", "ockeghem"];
 
 console.log("server running on " + port);
 
@@ -32,31 +35,39 @@ process.on('uncaughtException', (err) => {
 app.on('request', (req, res) => {
   if(req.url === "/debug_on" && req.method === "POST") { 
     res.writeHead(200, {"Content-Type" : "text/plain"});
-    if(searchUsers.indexOf("sfeyrt") >= 0){
-      res.write("debug mode have been already on");
-      res.end('');
-    } else {
-      searchUsers.push("sfeyrt");
-      res.write("debug mode on");
-      res.end('');
-    }
+    searchUsers.find({"user": "sfeyrt"}, (err, user) =>{
+      console.log(user);
+      if(user.length > 0){
+        res.write("debug mode have been already on");
+        console.log("もうonやで");
+        res.end('');
+      } else {
+        searchUsers.insert([{"user": "sfeyrt"}]);        
+        res.write("debug mode on");
+        console.log("onにしたで");
+        res.end('');
+      }
+    })
     return;
   }
   if(req.url === "/debug_off" && req.method === "POST"){
     res.writeHead(200, {"ContentType" : "text/plain"});
-    if(searchUsers.indexOf("sfeyrt") >= 0){
-      searchUsers.pop("sfeyrt");
-      res.write("debug mode off");
-      res.end('');
-    } else {
-      res.write("debug mode have been already off");
-      res.end('');
-    }
+    searchUsers.find({"user": "sfeyrt"}, (err, user) => {
+      if(user.length > 0){
+        searchUsers.remove({"user": "sfeyrt"});
+        res.write("debug mode off");
+        console.log("offにしたで");
+        res.end('');
+      } else {
+        res.write("debug mode have been already off");
+        console.log("もうoffやで");
+        res.end('');
+      }
+    });
     return;  
   }
   if(req.url !== '/' || req.method !== 'POST'){
     res.writeHead(404, {'Content-Type': 'text/plain'});
-    console.log("404");
     res.end('');
   }
   let body = '';
@@ -107,36 +118,38 @@ app.on('request', (req, res) => {
           }
         }  
       }
-
-
       if(WebhookEventObject.type === "follow"){
         console.log("followed");
         const message = {
           type: "text",
           text: "ツイートを取得、もしくはget tweetでセキュリティに関するアカウントのツイートを取得するピヨ！"
         }
+        const userToken = WebhookEventObject.source.groupId || WebhookEventObject.source.roomId || WebhookEventObject.source.userId;
         client.replyMessage(WebhookEventObject.replyToken, message).then( (body) => {
+          userData.insert([{"userToken": userToken}], (err, doc) => {
+            console.log("inserted " + userToken);
+          });
           console.log(body);
         })
         .catch( (e) => {
           console.log(e);
-        })
+        });
       }
       res.writeHead(200, {'Content-Type': 'text/plain'});
       res.end('su');
   });
 }).listen(port);
 
-twitClient.stream('user', {}, function(stream) {
+twitClient.stream('user', {}, (stream) => {
   console.log("streaming..");
-  stream.on('data', function(tweet) {
-    if( searchUsers.indexOf(tweet.user.screen_name) >= 0 && tweet.text ){
+  stream.on('data', (tweet) => {
+    searchUsers.find({"user" : tweet.user.screen_name}, (err, screenName) => {
       console.log(tweet.text);
       const message = {
         type : 'text',
         text: tweet.text
       }; 
-      db.find({}, (err, push_users) => {
+      userData.find({}, (err, push_users) => {
         push_users.forEach(user => {
           client.pushMessage(user.userToken, message)
             .then( (body) => {
@@ -147,13 +160,10 @@ twitClient.stream('user', {}, function(stream) {
             });
         });
       });
-    }    
+    })  
   });
  
-  stream.on('error', function(error) {
+  stream.on('error', (error) => {
     throw error;
   });
 });
-
-
-
