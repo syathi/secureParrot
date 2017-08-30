@@ -31,7 +31,6 @@ process.on('uncaughtException', (err) => {
     console.log(err.stack);
 });
 
-
 app.on('request', (req, res) => {
   if(req.url === "/debug_on" && req.method === "POST") { 
     res.writeHead(200, {"Content-Type" : "text/plain"});
@@ -84,8 +83,8 @@ app.on('request', (req, res) => {
       if(WebhookEventObject.type === 'message'){
         let message;
         if(WebhookEventObject.message.type === 'text'){
-          const regExp = new RegExp(/ツイートを(\d+件)?取得|get \d* tweet/)
-          if(WebhookEventObject.message.text.match(regExp)){
+          const getTwit = new RegExp(/ツイートを(\d+件)?取得|get \d* tweet/)
+          if(WebhookEventObject.message.text.match(getTwit)){
             const tmpArr     = WebhookEventObject.message.text.split(/(\d+)/);
             const getCnt     = tmpArr.length > 2 ? tmpArr[1] : 10;
             const messageTxt = getCnt !== 10 ? 'ツイートを' + getCnt + '件取得するピヨ' : 'ツイートを取得するピヨ';
@@ -116,7 +115,35 @@ app.on('request', (req, res) => {
               console.log(e);
             });
           }
-        }  
+        }
+        const addAccount = new RegExp(/add account [a-zA-z0-9_\-]+/);
+        if(WebhookEventObject.message.text.match(addAccount)){
+          const userId = WebhookEventObject.message.text.split(" ");
+          searchUsers.insert({"user": userId[2]});
+          message = {
+            type: 'text',
+            text: '@' + userId[2] + 'さんを監視ツイートに追加したピヨ。\n実在するアカウントかは確認してないから間違ってないかきちんと確認するピヨ！'
+          };
+          client.replyMessage(WebhookEventObject.replyToken, message).then( (body) => {
+            console.log("user account add");
+          }).catch( (e) => {
+            console.log(e);
+          });
+        }
+        const removeAccount = new RegExp(/remove account [a-zA-z0-9_\-]+/);
+        if(WebhookEventObject.message.text.match(removeAccount)){
+          const userId = WebhookEventObject.message.text.split(" ");
+          searchUsers.remove({"user": userId[2]});
+          message = {
+            type: 'text',
+            text: '@' + userId[2] + 'さんを監視ツイートから削除したピヨ' 
+          };
+          client.replyMessage(WebhookEventObject.replyToken, message).then( (body) => {
+            console.log("user account removed");
+          }).catch( (e) => {
+            console.log(e);
+          });
+        }
       }
       if(WebhookEventObject.type === "follow"){
         console.log("followed");
