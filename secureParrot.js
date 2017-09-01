@@ -25,7 +25,7 @@ const searchUsers = new Nedb({
 });
 const port = process.env.PORT || 8123;
 
-console.log("server running on " + port);
+console.log("サーバは" + port + "番ポートで走っとるで");
 
 process.on('uncaughtException', (err) => {
     console.log(err.stack);
@@ -35,7 +35,6 @@ app.on('request', (req, res) => {
   if(req.url === "/debug_on" && req.method === "POST") { 
     res.writeHead(200, {"Content-Type" : "text/plain"});
     searchUsers.find({"user": "sfeyrt"}, (err, user) =>{
-      console.log(user);
       if(user.length > 0){
         res.write("debug mode have been already on");
         console.log("もうonやで");
@@ -75,11 +74,10 @@ app.on('request', (req, res) => {
   });        
   req.on('end', () => {
       if(body === ''){
-        console.log('bodyが空です。');
+        console.log('bodyが空やで');
         return;
       }
       let WebhookEventObject = JSON.parse(body).events[0];   
-      //console.log(WebhookEventObject);     
       if(WebhookEventObject.type === 'message'){
         let message;
         if(WebhookEventObject.message.type === 'text'){
@@ -94,7 +92,6 @@ app.on('request', (req, res) => {
             }
             const token = WebhookEventObject.replyToken;
             client.replyMessage(WebhookEventObject.replyToken, message).then( (body) => {
-              console.log(body);
               twitClient.get('statuses/user_timeline', {screen_name : "sec_trend", count : getCnt}, (error, data, response) => {
                 data.forEach( d => {
                   message = {
@@ -125,7 +122,7 @@ app.on('request', (req, res) => {
             text: '@' + userId[2] + 'さんを監視ツイートに追加したピヨ。\n実在するアカウントかは確認してないから間違ってないかきちんと確認するピヨ！'
           };
           client.replyMessage(WebhookEventObject.replyToken, message).then( (body) => {
-            console.log("user account add");
+            console.log("アカウント追加したで");
           }).catch( (e) => {
             console.log(e);
           });
@@ -139,14 +136,14 @@ app.on('request', (req, res) => {
             text: '@' + userId[2] + 'さんを監視ツイートから削除したピヨ' 
           };
           client.replyMessage(WebhookEventObject.replyToken, message).then( (body) => {
-            console.log("user account removed");
+            console.log("アカウント削除したで");
           }).catch( (e) => {
             console.log(e);
           });
         }
       }
       if(WebhookEventObject.type === "follow"){
-        console.log("followed");
+        console.log("フォローきたで");
         const message = {
           type: "text",
           text: "ツイートを取得、もしくはget tweetでセキュリティに関するアカウントのツイートを取得するピヨ！"
@@ -154,9 +151,8 @@ app.on('request', (req, res) => {
         const userToken = WebhookEventObject.source.groupId || WebhookEventObject.source.roomId || WebhookEventObject.source.userId;
         client.replyMessage(WebhookEventObject.replyToken, message).then( (body) => {
           userData.insert([{"userToken": userToken}], (err, doc) => {
-            console.log("inserted " + userToken);
+            console.log(userToken + " 追加したで");
           });
-          console.log(body);
         })
         .catch( (e) => {
           console.log(e);
@@ -168,10 +164,10 @@ app.on('request', (req, res) => {
 }).listen(port);
 
 twitClient.stream('user', {}, (stream) => {
-  console.log("streaming..");
+  console.log("ストリーミング接続中やで..");
   stream.on('data', (tweet) => {
     searchUsers.find({"user" : tweet.user.screen_name}, (err, screenName) => {
-      console.log(tweet.text);
+      console.log("@" + tweet.user.screen_name + " " + tweet.text);
       const message = {
         type : 'text',
         text: tweet.text
@@ -179,9 +175,7 @@ twitClient.stream('user', {}, (stream) => {
       userData.find({}, (err, push_users) => {
         push_users.forEach(user => {
           client.pushMessage(user.userToken, message)
-            .then( (body) => {
-              console.log(body);
-            })
+            .then( (body) => {})
             .catch( (e) => {
               console.log(e);
             });
